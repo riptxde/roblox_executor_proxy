@@ -1,4 +1,4 @@
-# Roblox Script Proxy
+# Roblox Executor Proxy
 
 A lightweight HTTP-to-WebSocket proxy server written in Rust, designed to enable external execution of Roblox scripts via any Roblox executor that supports WebSocket connections.
 
@@ -6,7 +6,7 @@ A lightweight HTTP-to-WebSocket proxy server written in Rust, designed to enable
 
 This proxy provides a simple HTTP API that broadcasts scripts to connected clients, making it easy to integrate Roblox script execution with text editors or custom tooling.
 
-*Roblox Script Proxy* was created due to the lack of solutions for executing Roblox scripts externally. While executors like Zenith provide extensions for VSCode, support for other text editors has not been implemented. Additionally, most executors do not provide a way to execute scripts externally at all.
+*Roblox Executor Proxy* was created due to the lack of solutions for executing Roblox scripts externally. While executors like Zenith provide extensions for VSCode, support for other text editors has not been implemented. Additionally, most executors do not provide a way to execute scripts externally at all.
 
 ## Features
 
@@ -17,7 +17,7 @@ This proxy provides a simple HTTP API that broadcasts scripts to connected clien
 
 ## Download
 
-Get the latest release via the **Releases page**: [https://github.com/riptxde/roblox_script_proxy/releases/](https://github.com/riptxde/roblox_script_proxy/releases/)
+Get the latest release via the **Releases page**: [https://github.com/riptxde/roblox_executor_proxy/releases/](https://github.com/riptxde/roblox_executor_proxy/releases/)
 
 ## Usage
 
@@ -25,7 +25,7 @@ Get the latest release via the **Releases page**: [https://github.com/riptxde/ro
 
 1. **Run the proxy server:**
    ```bash
-   roblox_script_proxy.exe
+   roblox_executor_proxy.exe
    ```
 
 2. **Execute scripts** by sending HTTP POST requests with the file path:
@@ -40,14 +40,14 @@ Get the latest release via the **Releases page**: [https://github.com/riptxde/ro
 
 ### Client Setup (Executor Side)
 
-1. **Auto-execute the client script** (`roblox_script_proxy.lua`) in your Roblox executor by copying it to your executor's designated auto-execute folder
+1. **Auto-execute the client script** (`roblox_executor_proxy.lua`) in your Roblox executor by copying it to your executor's designated auto-execute folder
 2. The client will automatically connect to the proxy server at `ws://localhost:13378` upon joining a game
 3. Once connected, all scripts sent via the HTTP API will execute automatically
 
 ## Requirements
 
 ### Server Requirements
-- **Windows 10+** (The *Roblox Script Proxy Server* requires Windows 10 or later, and was tested on the latest version of Windows 11)
+- **Windows 10+** (The *Roblox Executor Proxy Server* requires Windows 10 or later, and was tested on the latest version of Windows 11)
 - No additional dependencies required - single executable
 
 ### Executor Requirements
@@ -64,7 +64,7 @@ Your Roblox executor must support the following functions:
 ### Command-Line Options
 
 ```bash
-roblox_script_proxy [--host HOST] [--http-port PORT] [--ws-port PORT]
+roblox_executor_proxy [--host HOST] [--http-port PORT] [--ws-port PORT]
 ```
 
 - `--host` - Server host for both HTTP and WebSocket (default: `localhost`)
@@ -73,7 +73,7 @@ roblox_script_proxy [--host HOST] [--http-port PORT] [--ws-port PORT]
 
 **Example:**
 ```bash
-roblox_script_proxy --host 0.0.0.0 --http-port 8080 --ws-port 8081
+roblox_executor_proxy --host 0.0.0.0 --http-port 8080 --ws-port 8081
 ```
 
 ## Editor Integration Examples
@@ -218,7 +218,7 @@ Returns the current server status and connected client count.
 
 ## Client Script Configuration
 
-Edit `roblox_script_proxy.lua` to customize connection settings:
+Edit `roblox_executor_proxy.lua` to customize connection settings:
 
 ```lua
 local WS_HOST = "localhost"
@@ -246,12 +246,12 @@ The server sends JSON messages to clients in this format:
 
 **Build:**
 ```bash
-git clone https://github.com/riptxde/roblox_script_proxy.git
-cd roblox_script_proxy
+git clone https://github.com/riptxde/roblox_executor_proxy.git
+cd roblox_executor_proxy
 cargo build --release
 ```
 
-The binary will be at `target/release/roblox_script_proxy.exe`
+The binary will be at `target/release/roblox_executor_proxy.exe`
 
 ## Configuration
 
@@ -269,7 +269,7 @@ The proxy uses these default settings:
 ## Troubleshooting
 
 **"No clients connected"**
-- Ensure you've auto-executed `roblox_script_proxy.lua` in your Roblox executor
+- Ensure you've auto-executed `roblox_executor_proxy.lua` in your Roblox executor
 - Check the executor's console for connection messages
 - Verify the WebSocket port (13378) is not blocked by firewall
 

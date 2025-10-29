@@ -1,5 +1,5 @@
 [package]
-name = "roblox_script_proxy"
+name = "roblox_executor_proxy"
 version = "0.1.0"
 edition = "2021"
 

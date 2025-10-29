@@ -1,5 +1,5 @@
 --[[
-    Universal Roblox Script Proxy Client
+    Universal Roblox Executor Proxy Client
     Auto-execute this script to connect to the proxy server
     Receives and executes scripts sent via the HTTP API
 
@@ -15,35 +15,35 @@ local RECONNECT_DELAY = 5
 -- Globals
 local wait = task.wait
 local url = ("ws://%s:%d"):format(WS_HOST, WS_PORT)
-local script_proxy_ws = nil
+local ws = nil
 
 -- Services
 local HttpService = game:GetService("HttpService")
 
 -- Functions
 local function log(message)
-    print("[Script Proxy] " .. message)
+    print("[Executor Proxy] " .. message)
 end
 
 local function executeMessages()
-    script_proxy_ws.OnMessage:Connect(function(message)
+    ws.OnMessage:Connect(function(message)
         local data = HttpService:JSONDecode(message)
 
         if data.type == "ping" then
             -- Keep-alive mechanism
-            script_proxy_ws:Send(HttpService:JSONEncode({type = "pong"}))
+            ws:Send(HttpService:JSONEncode({type = "pong"}))
         elseif data.type == "execute" then
             loadstring(data.script)()
         end
     end)
 
-    script_proxy_ws.OnClose:Wait()
+    ws.OnClose:Wait()
 end
 
 -- Main
 repeat
     local success, _ = pcall(function()
-        script_proxy_ws = WebSocket.connect(url)
+        ws = WebSocket.connect(url)
     end)
 
     if not success then
@@ -57,7 +57,7 @@ repeat
 
     executeMessages()
 
-    script_proxy_ws = nil
+    ws = nil
     log("Disconnected from server at " .. url)
     log(("Attempting to reconnect in %d seconds"):format(RECONNECT_DELAY))
     wait(RECONNECT_DELAY)

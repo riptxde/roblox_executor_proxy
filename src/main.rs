@@ -1,5 +1,5 @@
 /*!
-Universal Roblox Script Proxy Server
+Universal Roblox Executor Proxy Server
 
 HTTP server that broadcasts scripts to all connected WebSocket clients
 Receives file path via HTTP POST and forwards to all connected executors via WebSocket

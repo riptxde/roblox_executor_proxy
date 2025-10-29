@@ -81,7 +81,7 @@ impl ServerConfig {
 
     /// Print server information to console
     pub fn print_info(&self) {
-        println!("\nUniversal Roblox Script Proxy Server\n");
+        println!("\nUniversal Roblox Executor Proxy Server\n");
         println!("HTTP Server: http://{}:{}", self.http_host, self.http_port);
         println!("WebSocket Server: ws://{}:{}", self.ws_host, self.ws_port);
         println!("\nWaiting for executor clients to connect...");
