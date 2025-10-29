@@ -15,6 +15,7 @@ mod types;
 
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 use bytes::Bytes;
@@ -22,7 +23,7 @@ use warp::ws::Ws;
 use warp::Filter;
 
 use client_manager::ClientManager;
-use config::ServerConfig;
+use config::{ServerConfig, PING_INTERVAL_SECS, PONG_TIMEOUT_SECS};
 use handlers::{handle_execute, handle_status, handle_websocket};
 
 #[tokio::main]
@@ -57,6 +58,31 @@ async fn main() -> Result<()> {
     });
 
     let http_routes = execute_route.or(status_route);
+
+    // Start ping sender background task
+    let client_manager_ping = client_manager.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(PING_INTERVAL_SECS));
+        loop {
+            interval.tick().await;
+            client_manager_ping.send_ping().await;
+        }
+    });
+
+    // Start timeout checker background task
+    let client_manager_timeout = client_manager.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(PING_INTERVAL_SECS));
+        loop {
+            interval.tick().await;
+            let timed_out = client_manager_timeout
+                .check_timeouts(PONG_TIMEOUT_SECS)
+                .await;
+            if !timed_out.is_empty() {
+                client_manager_timeout.disconnect_clients(timed_out).await;
+            }
+        }
+    });
 
     // Start WebSocket server
     let ws_addr = format!("{}:{}", config.ws_host, config.ws_port);

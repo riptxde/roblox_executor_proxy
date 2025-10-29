@@ -29,7 +29,10 @@ local function executeMessages()
     script_proxy_ws.OnMessage:Connect(function(message)
         local data = HttpService:JSONDecode(message)
 
-        if data.type == "execute" then
+        if data.type == "ping" then
+            -- Keep-alive mechanism
+            script_proxy_ws:Send(HttpService:JSONEncode({type = "pong"}))
+        elseif data.type == "execute" then
             loadstring(data.script)()
         end
     end)

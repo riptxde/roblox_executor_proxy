@@ -9,7 +9,7 @@ use warp::ws::WebSocket;
 
 use crate::client_manager::{log, ClientManager};
 use crate::config::ALLOWED_EXTENSIONS;
-use crate::types::{ExecuteMessage, StatusResponse};
+use crate::types::{ExecuteMessage, SimpleMessage, StatusResponse};
 
 /// Handle WebSocket connections from executor clients
 pub async fn handle_websocket(ws: WebSocket, client_manager: Arc<ClientManager>) {
@@ -28,16 +28,37 @@ pub async fn handle_websocket(ws: WebSocket, client_manager: Arc<ClientManager>)
         }
     });
 
-    // Handle incoming messages from client (log them but don't act on them)
+    // Handle incoming messages from client
     while let Some(result) = ws_rx.next().await {
         match result {
             Ok(msg) => {
                 if msg.is_text() {
                     if let Ok(text) = msg.to_str() {
-                        log(&format!("Received message from client: {}", text));
+                        // Try to parse as SimpleMessage to check for pong
+                        if let Ok(parsed) = serde_json::from_str::<SimpleMessage>(text) {
+                            if parsed.msg_type == "pong" {
+                                // Update pong time silently (no log)
+                                client_manager.update_pong(client_id).await;
+                            } else {
+                                // Log other message types
+                                log(&format!(
+                                    "Received message from client {}: {}",
+                                    client_id, text
+                                ));
+                            }
+                        } else {
+                            // If parsing fails, just log it
+                            log(&format!(
+                                "Received message from client {}: {}",
+                                client_id, text
+                            ));
+                        }
                     }
                 } else if msg.is_binary() {
-                    log("Received binary message from client");
+                    log(&format!(
+                        "Received binary message from client {}",
+                        client_id
+                    ));
                 }
             }
             Err(_) => break,

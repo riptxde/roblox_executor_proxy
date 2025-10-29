@@ -10,6 +10,12 @@ const DEFAULT_HOST: &str = "localhost";
 /// Allowed file extensions for script execution
 pub const ALLOWED_EXTENSIONS: &[&str] = &[".lua", ".luau", ".txt"];
 
+/// Interval between ping messages sent to clients
+pub const PING_INTERVAL_SECS: u64 = 30;
+
+/// Timeout duration - clients that don't respond within this time are disconnected
+pub const PONG_TIMEOUT_SECS: u64 = 90;
+
 /// Server configuration
 pub struct ServerConfig {
     pub http_host: String,

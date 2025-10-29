@@ -1,5 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+/// Generic message type for ping/pong and other simple messages
+#[derive(Serialize, Deserialize)]
+pub struct SimpleMessage {
+    #[serde(rename = "type")]
+    pub msg_type: String,
+}
+
 /// Message structure for broadcasting scripts to executor clients
 #[derive(Serialize, Deserialize)]
 pub struct ExecuteMessage {
