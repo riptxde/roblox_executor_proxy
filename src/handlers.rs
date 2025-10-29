@@ -9,7 +9,7 @@ use warp::ws::WebSocket;
 
 use crate::client_manager::{log, ClientManager};
 use crate::config::ALLOWED_EXTENSIONS;
-use crate::types::{ExecuteMessage, SimpleMessage, StatusResponse};
+use crate::types::{ExecuteMessage, ExecuteResponse, SimpleMessage, StatusResponse};
 
 /// Handle WebSocket connections from executor clients
 pub async fn handle_websocket(ws: WebSocket, client_manager: Arc<ClientManager>) {
@@ -74,13 +74,20 @@ pub async fn handle_websocket(ws: WebSocket, client_manager: Arc<ClientManager>)
 pub async fn handle_execute(
     body: String,
     client_manager: Arc<ClientManager>,
-) -> Result<warp::reply::WithStatus<String>, warp::Rejection> {
+) -> Result<impl warp::Reply, warp::Rejection> {
     let file_path_str = body.trim();
 
     // Validate file path provided
     if file_path_str.is_empty() {
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some("No file path provided".to_string()),
+            clients_reached: None,
+            total_clients: None,
+        };
         return Ok(warp::reply::with_status(
-            "Error: No file path provided".to_string(),
+            warp::reply::json(&response),
             StatusCode::BAD_REQUEST,
         ));
     }
@@ -89,16 +96,30 @@ pub async fn handle_execute(
 
     // Validate file exists
     if !file_path.exists() {
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some(format!("File '{}' does not exist", file_path_str)),
+            clients_reached: None,
+            total_clients: None,
+        };
         return Ok(warp::reply::with_status(
-            format!("Error: File '{}' does not exist", file_path_str),
+            warp::reply::json(&response),
             StatusCode::BAD_REQUEST,
         ));
     }
 
     // Validate it's a file
     if !file_path.is_file() {
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some(format!("'{}' is not a file", file_path_str)),
+            clients_reached: None,
+            total_clients: None,
+        };
         return Ok(warp::reply::with_status(
-            format!("Error: '{}' is not a file", file_path_str),
+            warp::reply::json(&response),
             StatusCode::BAD_REQUEST,
         ));
     }
@@ -111,11 +132,18 @@ pub async fn handle_execute(
         .unwrap_or_default();
 
     if !ALLOWED_EXTENSIONS.contains(&extension.as_str()) {
-        return Ok(warp::reply::with_status(
-            format!(
-                "Error: File must be one of {:?}, got '{}'",
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some(format!(
+                "File must be one of {:?}, got '{}'",
                 ALLOWED_EXTENSIONS, extension
-            ),
+            )),
+            clients_reached: None,
+            total_clients: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
             StatusCode::BAD_REQUEST,
         ));
     }
@@ -124,8 +152,15 @@ pub async fn handle_execute(
     let code = match fs::read_to_string(file_path) {
         Ok(content) => content,
         Err(e) => {
+            let response = ExecuteResponse {
+                success: false,
+                message: None,
+                error: Some(format!("Error reading file: {}", e)),
+                clients_reached: None,
+                total_clients: None,
+            };
             return Ok(warp::reply::with_status(
-                format!("Error reading file: {}", e),
+                warp::reply::json(&response),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
@@ -147,8 +182,15 @@ pub async fn handle_execute(
     let message_json = match serde_json::to_string(&message) {
         Ok(json) => json,
         Err(e) => {
+            let response = ExecuteResponse {
+                success: false,
+                message: None,
+                error: Some(format!("Error serializing message: {}", e)),
+                clients_reached: None,
+                total_clients: None,
+            };
             return Ok(warp::reply::with_status(
-                format!("Error serializing message: {}", e),
+                warp::reply::json(&response),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
@@ -158,21 +200,45 @@ pub async fn handle_execute(
     let (successful, total) = client_manager.broadcast(&message_json).await;
 
     if total == 0 {
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some("No clients connected".to_string()),
+            clients_reached: Some(0),
+            total_clients: Some(0),
+        };
         Ok(warp::reply::with_status(
-            "[WARNING] No clients connected. Script not sent to any executor.".to_string(),
+            warp::reply::json(&response),
             StatusCode::SERVICE_UNAVAILABLE,
         ))
     } else if successful == total {
+        let response = ExecuteResponse {
+            success: true,
+            message: Some(format!(
+                "Script '{}' sent to all connected clients",
+                filename
+            )),
+            error: None,
+            clients_reached: Some(successful),
+            total_clients: Some(total),
+        };
         Ok(warp::reply::with_status(
-            format!("[SUCCESS] {} sent to {} client(s)", filename, successful),
+            warp::reply::json(&response),
             StatusCode::OK,
         ))
     } else {
-        Ok(warp::reply::with_status(
-            format!(
-                "[PARTIAL] {} sent to {}/{} client(s)",
+        let response = ExecuteResponse {
+            success: false,
+            message: None,
+            error: Some(format!(
+                "Script '{}' only reached {}/{} clients",
                 filename, successful, total
-            ),
+            )),
+            clients_reached: Some(successful),
+            total_clients: Some(total),
+        };
+        Ok(warp::reply::with_status(
+            warp::reply::json(&response),
             StatusCode::MULTI_STATUS,
         ))
     }

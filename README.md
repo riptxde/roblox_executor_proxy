@@ -195,11 +195,64 @@ Executes a script file in all connected Roblox executor clients.
 - **Body:** Absolute file path (e.g., `C:\Users\You\script.lua`)
 
 **Response:**
-- **200 OK** - `[SUCCESS] filename.lua sent to N client(s)`
-- **207 Multi-Status** - `[PARTIAL] filename.lua sent to N/M client(s)` (some clients failed)
-- **400 Bad Request** - File not found, invalid extension, or missing path
-- **500 Internal Server Error** - File read error
+
+All responses return JSON with the following structure:
+
+```json
+{
+  "success": true,
+  "message": "Script 'example.lua' sent to all connected clients",
+  "clients_reached": 2,
+  "total_clients": 2
+}
+```
+
+**Status Codes:**
+- **200 OK** - Script successfully sent to all clients
+  ```json
+  {
+    "success": true,
+    "message": "Script 'filename.lua' sent to all connected clients",
+    "clients_reached": 2,
+    "total_clients": 2
+  }
+  ```
+
+- **207 Multi-Status** - Script sent to some but not all clients
+  ```json
+  {
+    "success": false,
+    "error": "Script 'filename.lua' only reached 1/2 clients",
+    "clients_reached": 1,
+    "total_clients": 2
+  }
+  ```
+
+- **400 Bad Request** - Invalid request (file not found, wrong extension, etc.)
+  ```json
+  {
+    "success": false,
+    "error": "File 'C:\\path\\to\\script.lua' does not exist"
+  }
+  ```
+
+- **500 Internal Server Error** - Server error (file read error, serialization error)
+  ```json
+  {
+    "success": false,
+    "error": "Error reading file: Permission denied"
+  }
+  ```
+
 - **503 Service Unavailable** - No clients connected
+  ```json
+  {
+    "success": false,
+    "error": "No clients connected",
+    "clients_reached": 0,
+    "total_clients": 0
+  }
+  ```
 
 **Supported Extensions:** `.lua`, `.luau`, `.txt`
 

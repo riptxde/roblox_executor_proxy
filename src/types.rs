@@ -17,6 +17,20 @@ pub struct ExecuteMessage {
     pub timestamp: String,
 }
 
+/// Execute response structure for the /execute endpoint
+#[derive(Serialize)]
+pub struct ExecuteResponse {
+    pub success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clients_reached: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_clients: Option<usize>,
+}
+
 /// Status response structure for the /status endpoint
 #[derive(Serialize)]
 pub struct StatusResponse {
