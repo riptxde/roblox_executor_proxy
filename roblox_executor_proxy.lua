@@ -13,7 +13,6 @@ local WS_PORT = 13378
 local RECONNECT_DELAY = 5
 
 -- Globals
-local wait = task.wait
 local url = ("ws://%s:%d"):format(WS_HOST, WS_PORT)
 local ws = nil
 
@@ -25,6 +24,11 @@ local function log(message)
     print("[Executor Proxy] " .. message)
 end
 
+local function elog(err)
+    -- Log errors as warns for compatibility with executors whose socket connections break on error
+    warn("[Executor Proxy Error]: " .. err)
+end
+
 local function executeMessages()
     ws.OnMessage:Connect(function(message)
         local data = HttpService:JSONDecode(message)
@@ -33,11 +37,40 @@ local function executeMessages()
             -- Keep-alive mechanism
             ws:Send(HttpService:JSONEncode({type = "pong"}))
         elseif data.type == "execute" then
-            loadstring(data.script)()
+            local func, err = loadstring(data.script)
+
+            if not func then
+                -- Unable to load script
+                elog(err)
+                return
+            else
+                -- Execute and propagate runtime errors
+                local success, err = pcall(func)
+                if not success then
+                    elog(err)
+                    return
+                end
+            end
         end
     end)
 
-    ws.OnClose:Wait()
+    -- Wait if the executor supports OnClose:Wait()
+    local success, _ = pcall(function()
+        ws.OnClose:Wait()
+    end)
+
+    -- Otherwise, busywait
+    if not success then
+        local closed = false
+
+        ws.OnClose:Connect(function()
+            closed = true
+        end)
+
+        repeat
+            wait()
+        until closed
+    end
 end
 
 -- Main
