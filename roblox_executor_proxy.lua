@@ -33,7 +33,18 @@ local function executeMessages()
             -- Keep-alive mechanism
             ws:Send(HttpService:JSONEncode({type = "pong"}))
         elseif data.type == "execute" then
-            loadstring(data.script)()
+            local loaded, func = loadstring(data.script)
+
+            if not loaded then
+                -- Syntax error - throw error
+                error(func, 0)
+            else
+                -- Execute and propagate runtime errors
+                local success, err = pcall(func)
+                if not success then
+                    error(err, 0)
+                end
+            end
         end
     end)
 
