@@ -12,37 +12,29 @@ This proxy provides a simple HTTP API that broadcasts scripts to connected clien
 
 - **Universal Support** - Works with any platform that can make HTTP requests or run shell commands
 - **Simple HTTP API** - Send file paths via POST request, proxy handles the rest
+- **Easy Integration** - Easily integrate roblox script execution in your text editor without even needing to download extensions
 - **Fast & Lightweight** - Written in Rust with minimal resource usage
 - **Zero Runtime Dependencies** - Single executable, no installation required
 
-## Download
-
-Get the latest release via the **Releases page**: [https://github.com/riptxde/roblox_executor_proxy/releases/](https://github.com/riptxde/roblox_executor_proxy/releases/)
-
 ## Usage
 
-### Server Setup
+1. **Add the client script to your executor's auto-execute folder:**
+   - Download the client script (`roblox_executor_proxy.lua`) from the [Releases page](https://github.com/riptxde/roblox_executor_proxy/releases/)
+   - Copy the script to your executor's designated auto-execute folder
 
-1. **Run the proxy server:**
-   ```bash
-   roblox_executor_proxy.exe
-   ```
+2. **Run the proxy server:**
+   - Download the server executable (`roblox_executor_proxy.exe`) from the [Releases page](https://github.com/riptxde/roblox_executor_proxy/releases/)
+   - Run the executable and ensure it remains running in the background while you execute scripts
 
-2. **Execute scripts** by sending HTTP POST requests with the file path:
+3. **Attach to roblox:**
+   - Run roblox and attach to the roblox client using your script executor
+   - Ensure the client script is loaded and ready to receive requests by checking the dev console (`F9`) for the startup message
+
+4. **Execute scripts** by sending HTTP POST requests with the file path:
    ```bash
    curl -X POST http://localhost:13377/execute -d "C:\path\to\script.lua"
    ```
-
-3. **Check server status:**
-   ```bash
-   curl http://localhost:13377/status
-   ```
-
-### Client Setup (Executor Side)
-
-1. **Auto-execute the client script** (`roblox_executor_proxy.lua`) in your Roblox executor by copying it to your executor's designated auto-execute folder
-2. The client will automatically connect to the proxy server at `ws://localhost:13378` upon joining a game
-3. Once connected, all scripts sent via the HTTP API will execute automatically
+   You can also [integrate this into your text editor](#editor-integration-examples) so you do not need to manually run terminal commands to execute scripts
 
 ## Requirements
 
@@ -56,65 +48,42 @@ Your Roblox executor must support the following functions:
 - **`WebSocket.connect(url)`** - Connect to WebSocket servers
 - **`WebSocket.OnMessage`** - Receive messages from the server
 - **`WebSocket.OnClose`** - Detect connection closures
-- **`loadstring(script)()`** - Execute Lua code from strings
+- **`loadstring(script)`** - Execute Lua code from strings
 - **Auto-execute support** - Ability to run scripts automatically on game join
-
-**Compatible Executors:** Most modern executors support these features, including Synapse X, Script-Ware, Krnl, Fluxus, and others with WebSocket support.
-
-### Command-Line Options
-
-```bash
-roblox_executor_proxy [--host HOST] [--http-port PORT] [--ws-port PORT]
-```
-
-- `--host` - Server host for both HTTP and WebSocket (default: `localhost`)
-- `--http-port` - HTTP server port (default: `13377`)
-- `--ws-port` - WebSocket server port (default: `13378`)
-
-**Example:**
-```bash
-roblox_executor_proxy --host 0.0.0.0 --http-port 8080 --ws-port 8081
-```
 
 ## Editor Integration Examples
 
 ### Visual Studio Code
 
-Install the **REST Client** extension and create a `.http` file:
-
-```http
-POST http://localhost:13377/execute
-Content-Type: text/plain
-
-C:\path\to\script.lua
-```
-
-Or use a **tasks.json** configuration:
+Add the following to your VSCode's `tasks.json`:
 
 ```json
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Execute in Roblox",
-      "type": "shell",
-      "command": "curl",
-      "args": [
-        "-X", "POST",
-        "http://localhost:13377/execute",
-        "-d", "${file}"
-      ],
-      "group": "test"
-    }
-  ]
+	"label": "Roblox: Execute",
+	"type": "shell",
+	"command": "curl",
+	"args": [
+		"-X", "POST",
+		"http://localhost:13377/execute",
+		"-d", "${file}"
+	]
 }
 ```
 
-Then use the [Keyboard Shortcuts Editor](https://code.visualstudio.com/docs/configure/keybindings#_keyboard-shortcuts-editor) to bind the task or REST command to a key.
+Then, you can run the task via the command palette. You can also bind it to a key, for example `Ctrl+R`. You can do so by adding the following to your VSCode's `keybindings.json`:
+
+```json
+{
+    "key": "ctrl+r",
+    "command": "workbench.action.tasks.runTask",
+    "when": "resourceExtname == .lua || resourceExtname == .luau",
+    "args": "Roblox: Execute"
+}
+```
 
 ### Zed Editor
 
-Add the following to your **`tasks.json`**:
+Add the following to your Zed's `tasks.json`:
 
 ```json
 {
@@ -123,7 +92,7 @@ Add the following to your **`tasks.json`**:
 }
 ```
 
-Then bind it to a key, for example `Alt+R`, in **`keymap.json`**:
+Then, you can run the task via the command palette. You can also bind it to a key, for example `Alt+R`. You can do so by adding the following to your Zed's `keymap.json`:
 
 ```json
 {
@@ -146,9 +115,13 @@ Add a build system (`Tools > Build System > New Build System`):
 ```json
 {
   "shell_cmd": "curl -X POST http://localhost:13377/execute -d \"$file\"",
-  "selector": "source.lua"
+  "file_patterns": ["*.lua", "*.luau"]
 }
 ```
+
+And save this as `Roblox.sublime-build` or any filename of your choice.
+
+Then you can run a script by selecting `Tools > Build`, or by pressing `Ctrl+B`.
 
 ### Neovim
 
@@ -162,25 +135,19 @@ vim.keymap.set('n', '<leader>r', function()
 end, { desc = 'Execute in Roblox' })
 ```
 
-### Custom Scripts
+### Command-Line Options
 
-Any language that can make HTTP requests works:
-
-**Python:**
-```python
-import requests
-requests.post('http://localhost:13377/execute', data=r'C:\script.lua')
+```bash
+roblox_executor_proxy [--host HOST] [--http-port PORT] [--ws-port PORT]
 ```
 
-**PowerShell:**
-```powershell
-Invoke-WebRequest -Uri http://localhost:13377/execute -Method POST -Body "C:\script.lua"
-```
+- `--host` - Server host for both HTTP and WebSocket (default: `localhost`)
+- `--http-port` - HTTP server port (default: `13377`)
+- `--ws-port` - WebSocket server port (default: `13378`)
 
-**Node.js:**
-```javascript
-const axios = require('axios');
-axios.post('http://localhost:13377/execute', 'C:\\script.lua');
+**Example:**
+```bash
+roblox_executor_proxy --host 0.0.0.0 --http-port 8080 --ws-port 8081
 ```
 
 ## API Reference
