@@ -21,11 +21,13 @@ local HttpService = game:GetService("HttpService")
 
 -- Functions
 local function log(message)
+    message = message or ""
     print("[Executor Proxy] " .. message)
 end
 
 local function elog(err)
     -- Log errors as warns for compatibility with executors whose socket connections break on error
+    err = err or ""
     warn("[Executor Proxy Error]: " .. err)
 end
 
