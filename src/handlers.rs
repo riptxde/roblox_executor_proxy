@@ -70,7 +70,7 @@ pub async fn handle_websocket(ws: WebSocket, client_manager: Arc<ClientManager>)
     client_manager.unregister(client_id).await;
 }
 
-/// Handle /execute endpoint - receives file path and broadcasts script to all clients
+/// Handle /execute_file endpoint - receives file path and broadcasts script to all clients
 pub async fn handle_execute(
     body: String,
     client_manager: Arc<ClientManager>,

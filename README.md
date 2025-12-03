@@ -32,7 +32,7 @@ This proxy provides a simple HTTP API that broadcasts scripts to connected clien
 
 4. **Execute scripts** by sending HTTP POST requests with the file path:
    ```bash
-   curl -X POST http://localhost:13377/execute -d "C:\path\to\script.lua"
+   curl -X POST http://localhost:13377/execute_file -d "C:\path\to\script.lua"
    ```
    You can also [integrate this into your text editor](#editor-integration-examples) so you do not need to manually run terminal commands to execute scripts
 
@@ -64,7 +64,7 @@ Add the following to your VSCode's `tasks.json`:
 	"command": "curl",
 	"args": [
 		"-X", "POST",
-		"http://localhost:13377/execute",
+		"http://localhost:13377/execute_file",
 		"-d", "${file}"
 	]
 }
@@ -88,7 +88,7 @@ Add the following to your Zed's `tasks.json`:
 ```json
 {
   "label": "Roblox: Execute",
-  "command": "curl -X POST http://localhost:13377/execute -d \"$ZED_FILE\""
+  "command": "curl -X POST http://localhost:13377/execute_file -d \"$ZED_FILE\""
 }
 ```
 
@@ -114,7 +114,7 @@ Add a build system (`Tools > Build System > New Build System`):
 
 ```json
 {
-  "shell_cmd": "curl -X POST http://localhost:13377/execute -d \"$file\"",
+  "shell_cmd": "curl -X POST http://localhost:13377/execute_file -d \"$file\"",
   "file_patterns": ["*.lua", "*.luau"]
 }
 ```
@@ -130,7 +130,7 @@ Add a keybinding in your config:
 ```lua
 vim.keymap.set('n', '<leader>r', function()
   local file = vim.fn.expand('%:p')
-  vim.fn.system('curl -X POST http://localhost:13377/execute -d "' .. file .. '"')
+  vim.fn.system('curl -X POST http://localhost:13377/execute_file -d "' .. file .. '"')
   print('Executed in Roblox')
 end, { desc = 'Execute in Roblox' })
 ```
@@ -152,7 +152,7 @@ roblox_executor_proxy --host 0.0.0.0 --http-port 8080 --ws-port 8081
 
 ## API Reference
 
-### `POST /execute`
+### `POST /execute_file`
 
 Executes a script file in all connected Roblox executor clients.
 

@@ -5,7 +5,7 @@ HTTP server that broadcasts scripts to all connected WebSocket clients
 Receives file path via HTTP POST and forwards to all connected executors via WebSocket
 
 Example curl command (Windows CMD):
-  curl -X POST http://localhost:13377/execute -d "C:\path\to\script.lua"
+  curl -X POST http://localhost:13377/execute_file -d "C:\path\to\script.lua"
 */
 
 mod client_manager;
@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
 
     // HTTP routes
     let client_manager_execute = client_manager.clone();
-    let execute_route = warp::path("execute")
+    let execute_route = warp::path("execute_file")
         .and(warp::post())
         .and(warp::body::bytes())
         .and_then(move |body: Bytes| {
